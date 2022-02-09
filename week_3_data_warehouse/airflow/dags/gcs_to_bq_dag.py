@@ -13,7 +13,7 @@ path_to_local_home = os.environ.get("AIRFLOW_HOME", "/opt/airflow/")
 BIGQUERY_DATASET = os.environ.get("BIGQUERY_DATASET", 'trips_data_all')
 
 DATASET = "tripdata"
-COLOUR_RANGE = {'yellow': 'tpep_pickup_datetime', 'green': 'lpep_pickup_datetime'}
+COLOUR_RANGE = {'yellow': 'tpep_pickup_datetime', 'fhv': 'pickup_datetime'}
 INPUT_PART = "raw"
 INPUT_FILETYPE = "parquet"
 
@@ -41,7 +41,7 @@ with DAG(
             source_object=f'{INPUT_PART}/{colour}_{DATASET}*.{INPUT_FILETYPE}',
             destination_bucket=BUCKET,
             destination_object=f'{colour}/{colour}_{DATASET}',
-            move_object=True
+            move_object=False
         )
 
         bigquery_external_table_task = BigQueryCreateExternalTableOperator(
@@ -54,7 +54,7 @@ with DAG(
                 },
                 "externalDataConfiguration": {
                     "autodetect": "True",
-                    "sourceFormat": "CSV",
+                    "sourceFormat": "PARQUET",
                     "sourceUris": [f"gs://{BUCKET}/{colour}/*"],
                 },
             },
