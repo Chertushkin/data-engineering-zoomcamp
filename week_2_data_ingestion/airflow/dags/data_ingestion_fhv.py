@@ -64,7 +64,7 @@ with DAG(
 
     wget_task = BashOperator(
         task_id="wget",
-        bash_command=f"curl -sSL {URL_TEMPLATE} > {OUTPUT_FILE_TEMPLATE}",
+        bash_command=f"curl -sSfL {URL_TEMPLATE} > {OUTPUT_FILE_TEMPLATE}",
     )
 
     print(f"Finished wget for {URL_TEMPLATE}")

@@ -57,7 +57,7 @@ with DAG(
     dag_id="data_ingestion_yellow_2019_2020_v5",
     schedule_interval="0 6 2 * *",
     start_date=datetime(2019, 1, 1),
-    end_date=datetime(2020, 12, 1),
+    end_date=datetime(2020, 12, 31),
     catchup=True,
     max_active_runs=3,
     tags=["dtc-de"],
@@ -65,7 +65,7 @@ with DAG(
 
     wget_task = BashOperator(
         task_id="wget",
-        bash_command=f"curl -sSL {URL_TEMPLATE} > {OUTPUT_FILE_TEMPLATE}",
+        bash_command=f"curl -sSLf {URL_TEMPLATE} > {OUTPUT_FILE_TEMPLATE}",
     )
 
     print(f"Finished wget for {URL_TEMPLATE}")
