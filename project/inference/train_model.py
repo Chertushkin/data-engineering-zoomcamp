@@ -5,10 +5,9 @@ import boto3
 import shutil as sh
 
 
-S3_BUCKET_PATH = "misha-ml-models"
+from constants import S3_BUCKET_PATH, SAVE_PATH, SAVE_PATH_TAR
+
 checkpoint = "cardiffnlp/twitter-roberta-base-sentiment"
-save_path = "sentiment_classifier"
-save_path_tar = f"{save_path}.tar.gz"
 
 
 class ModelSaver:
@@ -22,16 +21,17 @@ class ModelSaver:
         self.cleanup()
 
     def cleanup(self):
-        if os.path.exists(save_path):
-            print(f"Cleaning {save_path}")
-            sh.rmtree(save_path)
-        if os.path.exists(save_path_tar):
-            print(f"Cleaning {save_path_tar}")
-            os.remove(save_path_tar)
+        if os.path.exists(SAVE_PATH):
+            print(f"Cleaning {SAVE_PATH}")
+            sh.rmtree(SAVE_PATH)
+        if os.path.exists(SAVE_PATH_TAR):
+            print(f"Cleaning {SAVE_PATH_TAR}")
+            os.remove(SAVE_PATH_TAR)
 
     def make_tarfile(self, output_filename, source_dir):
         with tarfile.open(output_filename, "w:gz") as tar:
-            tar.add(source_dir, arcname=os.path.basename(source_dir))
+            tar.add(source_dir, arcname='.')
+            # tar.add(source_dir, arcname=os.path.basename(source_dir))
 
     def upload_s3_file(self, filename, local_filename):
         s3 = boto3.client("s3")
@@ -39,13 +39,14 @@ class ModelSaver:
             s3.upload_fileobj(f, S3_BUCKET_PATH, filename)
 
 
+
 with ModelSaver() as mv:
     tokenizer = AutoTokenizer.from_pretrained(checkpoint)
     model = AutoModelForSequenceClassification.from_pretrained(checkpoint)
     trainer = Trainer(model=model, tokenizer=tokenizer)
-    trainer.save_model(save_path)
+    trainer.save_model(SAVE_PATH)
 
-    mv.make_tarfile(save_path_tar, save_path)
-    mv.upload_s3_file(save_path_tar, save_path_tar)
+    mv.make_tarfile(SAVE_PATH_TAR, SAVE_PATH)
+    mv.upload_s3_file(SAVE_PATH_TAR, SAVE_PATH_TAR)
 
-    print(f"File {save_path_tar} uploaded to {S3_BUCKET_PATH}/{save_path_tar}")
+    print(f"File {SAVE_PATH_TAR} uploaded to {S3_BUCKET_PATH}/{SAVE_PATH_TAR}")
