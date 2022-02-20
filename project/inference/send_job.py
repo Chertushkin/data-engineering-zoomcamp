@@ -1,9 +1,11 @@
 import boto3
 import numpy as np
 
+from constants import INSTANCE_TYPE
+
 OUTPUT_BUCKET = "s3://misha-data-bucket/processed"
-INPUT_BUCKET = "s3://misha-data-bucket/919-3_small.csv"
-INSTANCE_TYPE = "ml.m5.large"
+INPUT_BUCKET = "s3://misha-data-bucket/919-3.csv"
+
 MAX_TRANSFORMS = 4
 
 

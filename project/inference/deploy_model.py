@@ -9,6 +9,7 @@ from constants import (
     MODEL_NAME,
     S3_SAGEMAKER_ARTIFACT_BUCKET,
 )
+from constants import INSTANCE_TYPE
 
 SAGEMAKER_ROLE = "AmazonSageMaker-ExecutionRole-20220219T085820"
 PYTORCH_FRAMEWORK_VERSION = "1.7"
@@ -34,7 +35,7 @@ def create_and_deploy_model(trained_model_path):
 
         model.sagemaker_session = sagemaker_session
 
-        container_def = model.prepare_container_def(instance_type="ml.t3.large")
+        container_def = model.prepare_container_def(instance_type=INSTANCE_TYPE)
 
         logging.info(f"Definition of container: {container_def}")
 
