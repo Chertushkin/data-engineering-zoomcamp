@@ -5,7 +5,7 @@ from constants import INSTANCE_TYPE
 
 OUTPUT_BUCKET = "s3://misha-data-bucket/processed"
 INPUT_BUCKET = "s3://misha-data-bucket/919-3.csv"
-
+INPUT_BUCKET = "s3://misha-data-bucket/919-3_med_2.csv"
 MAX_TRANSFORMS = 4
 
 
@@ -36,3 +36,4 @@ request = {
 if __name__ == "__main__":
     client = boto3.client("sagemaker")
     client.create_transform_job(**request)
+    print(f'Job {request["TransformJobName"]} is sent')
