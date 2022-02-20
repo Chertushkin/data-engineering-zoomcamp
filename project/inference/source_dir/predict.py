@@ -66,14 +66,19 @@ def input_fn(serialized_input_data, input_content_type):
     if input_content_type == input_content_type:
         # if isinstance(serialized_input_data, (bytes, bytearray)):
         # logging.info('MISHA: Converting from bytes array')
-        if not isinstance(serialized_input_data, str):
-            serialized_input_data = str(serialized_input_data, "utf-8")
-        serialized_input_data = io.StringIO(serialized_input_data)
-        logging.info(serialized_input_data)
-        df = pd.read_csv(serialized_input_data)
-        logging.info(df.head())
-        logging.info(f"Successfully read csv, payload item {df}")
-        return list(df["truncatedText"].values)
+        logging.info("Misha:", serialized_input_data)
+        df = pd.read_csv(io.StringIO(serialized_input_data), dtype=str, header=None)[1]
+        logging.info("Misha:", df)
+        return df
+
+        # if not isinstance(serialized_input_data, str):
+        #     serialized_input_data = str(serialized_input_data, "utf-8")
+        # serialized_input_data = io.StringIO(serialized_input_data)
+        # logging.info(serialized_input_data)
+        # df = pd.read_csv(serialized_input_data)
+        # logging.info(df.head())
+        # logging.info(f"Successfully read csv, payload item {df}")
+        # return list(df["truncatedText"].values)
     else:
         raise ValueError(f"Unsupported content type:{input_content_type}")
 
@@ -148,13 +153,14 @@ def output_fn(prediction_output, accept):
 
     logging.info(f"Generated prediction {final_predictions}")
 
-    return pd.DataFrame(
-        final_predictions,
-        columns=[
-            "label",
-            "major_probability",
-            "negative_probability",
-            "neutral_probability",
-            "positive_probability",
-        ],
-    ).to_csv(index=False)
+    return pd.DataFrame(final_predictions).to_csv(index=False, header=None)
+    # return pd.DataFrame(
+    #     final_predictions,
+    #     columns=[
+    #         "label",
+    #         "major_probability",
+    #         "negative_probability",
+    #         "neutral_probability",
+    #         "positive_probability",
+    #     ],
+    # ).to_csv(index=False)
