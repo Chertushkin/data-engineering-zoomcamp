@@ -100,7 +100,7 @@ def predict_fn(input_data, model_artifacts):
     model, tokenizer = model_artifacts
 
     # limit number of CPU threads to be used per worker
-    torch.set_num_threads(1)
+    # torch.set_num_threads(1)
 
     # encode input text
     model.eval()
