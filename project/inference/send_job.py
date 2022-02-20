@@ -14,7 +14,7 @@ request = {
     "TransformJobName": f"sentiment-job-{random_suffix}",
     "ModelName": "sentiment-classifier",
     "MaxConcurrentTransforms": MAX_TRANSFORMS,
-    "BatchStrategy": "SingleRecord",
+    "BatchStrategy": "MultiRecord",
     "DataProcessing": {"JoinSource": "Input"},
     "TransformOutput": {
         "S3OutputPath": OUTPUT_BUCKET,
