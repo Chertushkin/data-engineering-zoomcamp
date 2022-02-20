@@ -1,8 +1,3 @@
-from distutils.command.install_lib import PYTHON_SOURCE_EXTENSION
-from unicodedata import name
-from cv2 import log
-import numpy as np
-import pandas as pd
 import sagemaker
 from sagemaker.pytorch import PyTorchModel
 import logging

@@ -30,14 +30,13 @@ class ModelSaver:
 
     def make_tarfile(self, output_filename, source_dir):
         with tarfile.open(output_filename, "w:gz") as tar:
-            tar.add(source_dir, arcname='.')
+            tar.add(source_dir, arcname=".")
             # tar.add(source_dir, arcname=os.path.basename(source_dir))
 
     def upload_s3_file(self, filename, local_filename):
         s3 = boto3.client("s3")
         with open(local_filename, "rb") as f:
             s3.upload_fileobj(f, S3_BUCKET_PATH, filename)
-
 
 
 with ModelSaver() as mv:

@@ -1,14 +1,9 @@
-import boto3
 import io
-import os
 import torch
 import logging
 import numpy as np
 import pandas as pd
-import glob
-import json
 import torch.nn.functional as F
-from transformers import BertForSequenceClassification, BertTokenizer
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 max_len = 128
@@ -69,7 +64,14 @@ def input_fn(serialized_input_data, input_content_type):
 
     # validate input content type
     if input_content_type == input_content_type:
-        df = pd.read_csv(io.StringIO(serialized_input_data), dtype=str)
+        # if isinstance(serialized_input_data, (bytes, bytearray)):
+        # logging.info('MISHA: Converting from bytes array')
+        if not isinstance(serialized_input_data, str):
+            serialized_input_data = str(serialized_input_data, "utf-8")
+        serialized_input_data = io.StringIO(serialized_input_data)
+        logging.info(serialized_input_data)
+        df = pd.read_csv(serialized_input_data)
+        logging.info(df.head())
         logging.info(f"Successfully read csv, payload item {df}")
         return list(df["truncatedText"].values)
     else:
@@ -146,4 +148,13 @@ def output_fn(prediction_output, accept):
 
     logging.info(f"Generated prediction {final_predictions}")
 
-    return pd.DataFrame(final_predictions).to_csv(index=False, header=None)
+    return pd.DataFrame(
+        final_predictions,
+        columns=[
+            "label",
+            "major_probability",
+            "negative_probability",
+            "neutral_probability",
+            "positive_probability",
+        ],
+    ).to_csv(index=False)
