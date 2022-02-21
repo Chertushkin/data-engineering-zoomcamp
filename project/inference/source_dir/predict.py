@@ -23,7 +23,7 @@ def model_fn(model_dir):
     """
 
     logging.info("in model_fn()")
-    torch.set_num_threads(1)
+
     # compute processor
     device = torch.device(
         "cuda:" + str(torch.cuda.current_device())
@@ -62,7 +62,6 @@ def input_fn(serialized_input_data, input_content_type):
     """
 
     logging.info("in input_fn()")
-    torch.set_num_threads(1)
 
     # validate input content type
     if input_content_type == input_content_type:
@@ -111,7 +110,7 @@ def predict_fn(input_data, model_artifacts):
         return e_x / div
 
     # limit number of CPU threads to be used per worker
-    torch.set_num_threads(1)
+    # torch.set_num_threads(1)
 
     # encode input text
     model.eval()
