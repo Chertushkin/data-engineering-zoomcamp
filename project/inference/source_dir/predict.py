@@ -4,7 +4,8 @@ import logging
 import numpy as np
 import pandas as pd
 import torch.nn.functional as F
-from transformers import AutoModelForSequenceClassification, AutoTokenizer
+from transformers import AutoModelForSequenceClassification, AutoTokenizer, Trainer
+from datasets import Dataset
 
 max_len = 128
 pretrained_model_name = "cardiffnlp/twitter-roberta-base-sentiment"
@@ -22,7 +23,7 @@ def model_fn(model_dir):
     """
 
     logging.info("in model_fn()")
-
+    torch.set_num_threads(1)
     # compute processor
     device = torch.device(
         "cuda:" + str(torch.cuda.current_device())
@@ -61,6 +62,7 @@ def input_fn(serialized_input_data, input_content_type):
     """
 
     logging.info("in input_fn()")
+    torch.set_num_threads(1)
 
     # validate input content type
     if input_content_type == input_content_type:
@@ -68,17 +70,17 @@ def input_fn(serialized_input_data, input_content_type):
         # logging.info('MISHA: Converting from bytes array')
         # logging.info("Misha:", serialized_input_data)
         # df = pd.read_csv(io.StringIO(serialized_input_data), dtype=str, header=None)[1]
-        # logging.info("Misha:", df)
+        # logging.info("Misha:", df.head())
         # return df
 
         if not isinstance(serialized_input_data, str):
             serialized_input_data = str(serialized_input_data, "utf-8")
         serialized_input_data = io.StringIO(serialized_input_data)
-        logging.info(serialized_input_data)
+        # logging.info(serialized_input_data)
         df = pd.read_csv(serialized_input_data)
         logging.info(df.head())
         logging.info(f"Successfully read csv, payload item {df}")
-        return list(df["truncatedText"].values)
+        return df["truncatedText"].values
     else:
         raise ValueError(f"Unsupported content type:{input_content_type}")
 
@@ -99,31 +101,57 @@ def predict_fn(input_data, model_artifacts):
     attention_masks = []
     model, tokenizer = model_artifacts
 
+    def softmax(z):
+        assert len(z.shape) == 2
+        s = np.max(z, axis=1)
+        s = s[:, np.newaxis]  # necessary step to do broadcasting
+        e_x = np.exp(z - s)
+        div = np.sum(e_x, axis=1)
+        div = div[:, np.newaxis]  # dito
+        return e_x / div
+
     # limit number of CPU threads to be used per worker
-    # torch.set_num_threads(1)
+    torch.set_num_threads(1)
 
     # encode input text
     model.eval()
     with torch.no_grad():
-        for row in input_data:
-            encoded_row = tokenizer.encode_plus(
-                text=row,
+        # for row in input_data:
+        #     encoded_row = tokenizer.encode_plus(
+        #         text=row,
+        #         add_special_tokens=True,
+        #         max_length=max_len,
+        #         pad_to_max_length=True,
+        #         return_attention_mask=True,
+        #         truncation=True,
+        #     )
+        #     input_ids.append(encoded_row.get("input_ids"))
+        #     attention_masks.append(encoded_row.get("attention_mask"))
+        ds = Dataset.from_dict({"text": input_data})
+        predict_df = ds.map(
+            lambda x: tokenizer(
+                text=x["text"],
                 add_special_tokens=True,
                 max_length=max_len,
                 pad_to_max_length=True,
                 return_attention_mask=True,
                 truncation=True,
-            )
-            input_ids.append(encoded_row.get("input_ids"))
-            attention_masks.append(encoded_row.get("attention_mask"))
-
+            ),
+            batched=True,
+        )
         # return the class with the highest prob with corresponding index
-        input_ids = torch.tensor(input_ids)
-        attention_masks = torch.tensor(attention_masks)
-        logits = model(input_ids, attention_masks)
-        probs = F.softmax(logits[0], dim=1)
+        # input_ids = torch.tensor(input_ids)
+        # attention_masks = torch.tensor(attention_masks)
+        # logits = model(input_ids, attention_masks)
+        trainer = Trainer(model=model, tokenizer=tokenizer)
+        trainer.args.per_device_eval_batch_size = 4
+        trainer.args.output_dir = None
+        trainer.args.overwrite_output_dir = True
+
+        logits = trainer.predict(predict_df)
+        probs = softmax(logits[0])
         logging.info("Prediction done...")
-        return np.array(probs)
+        return probs
 
 
 def output_fn(prediction_output, accept):
@@ -153,14 +181,14 @@ def output_fn(prediction_output, accept):
 
     logging.info(f"Generated prediction {final_predictions}")
 
-    # return pd.DataFrame(final_predictions).to_csv(index=False, header=None)
-    return pd.DataFrame(
-        final_predictions,
-        columns=[
-            "label",
-            "major_probability",
-            "negative_probability",
-            "neutral_probability",
-            "positive_probability",
-        ],
-    ).to_csv(index=False)
+    return pd.DataFrame(final_predictions).to_csv(index=False, header=None)
+    # return pd.DataFrame(
+    #     final_predictions,
+    #     columns=[
+    #         "label",
+    #         "major_probability",
+    #         "negative_probability",
+    #         "neutral_probability",
+    #         "positive_probability",
+    #     ],
+    # ).to_csv(index=False)

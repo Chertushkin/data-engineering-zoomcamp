@@ -1,5 +1,6 @@
 import sagemaker
 from sagemaker.pytorch import PyTorchModel
+from sagemaker.huggingface.model import HuggingFaceModel
 import logging
 import sys
 
@@ -22,15 +23,17 @@ def create_and_deploy_model(trained_model_path):
         logging.info(f"Started {trained_model_path} deployment")
         sagemaker_session = sagemaker.Session()
 
-        model = PyTorchModel(
+        model = HuggingFaceModel(
             model_data=trained_model_path,
             name=MODEL_NAME,
             role=SAGEMAKER_ROLE,
-            framework_version=PYTORCH_FRAMEWORK_VERSION,
+            transformers_version="4.6",
+            pytorch_version=PYTORCH_FRAMEWORK_VERSION,
             py_version=PYTORCH_PYTHON_VERSION,
             entry_point=SAGEMAKER_INFERENCE_ENTRY_POINT,
             code_location=f"s3://{S3_SAGEMAKER_ARTIFACT_BUCKET}/{MODEL_NAME}",
             source_dir="source_dir",
+            # model_server_workers=1
         )
 
         model.sagemaker_session = sagemaker_session

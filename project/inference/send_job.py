@@ -3,17 +3,19 @@ import numpy as np
 
 from constants import INSTANCE_TYPE
 
-OUTPUT_BUCKET = "s3://misha-data-bucket/processed"
+OUTPUT_BUCKET = "s3://misha-data-bucket/output"
 INPUT_BUCKET = "s3://misha-data-bucket/919-3.csv"
-INPUT_BUCKET = "s3://misha-data-bucket/919-3_med_2.csv"
-MAX_TRANSFORMS = 4
+INPUT_BUCKET = (
+    "s3://misha-data-bucket/input/"  # "s3://misha-data-bucket/919-3_med_2.csv"
+)
+# MAX_TRANSFORMS = 1
 
 
 random_suffix = "".join([str(x) for x in np.random.randint(1, 1000, 5)])
 request = {
     "TransformJobName": f"sentiment-job-{random_suffix}",
     "ModelName": "sentiment-classifier",
-    "MaxConcurrentTransforms": MAX_TRANSFORMS,
+    # "MaxConcurrentTransforms": MAX_TRANSFORMS,
     "BatchStrategy": "MultiRecord",
     "DataProcessing": {"JoinSource": "Input"},
     "TransformOutput": {
