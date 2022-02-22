@@ -33,6 +33,7 @@ def create_and_deploy_model(trained_model_path):
             entry_point=SAGEMAKER_INFERENCE_ENTRY_POINT,
             code_location=f"s3://{S3_SAGEMAKER_ARTIFACT_BUCKET}/{MODEL_NAME}",
             source_dir="source_dir",
+            
             # model_server_workers=1
         )
 
