@@ -54,7 +54,7 @@ with DAG(
                 },
                 "externalDataConfiguration": {
                     "autodetect": "True",
-                    "sourceFormat": "PARQUET",
+                    "sourceFormat": f"{INPUT_FILETYPE.upper()}",
                     "sourceUris": [f"gs://{BUCKET}/{colour}/*"],
                 },
             },
