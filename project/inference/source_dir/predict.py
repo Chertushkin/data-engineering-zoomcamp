@@ -4,6 +4,7 @@ import logging
 import numpy as np
 import pandas as pd
 import torch.nn.functional as F
+import multiprocessing as mp
 from transformers import AutoModelForSequenceClassification, AutoTokenizer, Trainer
 from datasets import Dataset
 
@@ -68,18 +69,19 @@ def input_fn(serialized_input_data, input_content_type):
         # if isinstance(serialized_input_data, (bytes, bytearray)):
         # logging.info('MISHA: Converting from bytes array')
         # logging.info("Misha:", serialized_input_data)
-        # df = pd.read_csv(io.StringIO(serialized_input_data), dtype=str, header=None)[1]
-        # logging.info("Misha:", df.head())
-        # return df
+        df = pd.read_csv(io.StringIO(serialized_input_data), dtype=str, header=None)[0]
+        logging.info(f"Misha: {df.head()}")
+        logging.info(f"Misha: len of df is: {len(df)}")
+        return df
 
-        if not isinstance(serialized_input_data, str):
-            serialized_input_data = str(serialized_input_data, "utf-8")
-        serialized_input_data = io.StringIO(serialized_input_data)
-        # logging.info(serialized_input_data)
-        df = pd.read_csv(serialized_input_data)
-        logging.info(df.head())
-        logging.info(f"Successfully read csv, payload item {df}")
-        return df["truncatedText"].values
+        # if not isinstance(serialized_input_data, str):
+        #     serialized_input_data = str(serialized_input_data, "utf-8")
+        # serialized_input_data = io.StringIO(serialized_input_data)
+        # # logging.info(serialized_input_data)
+        # df = pd.read_csv(serialized_input_data)
+        # logging.info(df.head())
+        # logging.info(f"Successfully read csv, payload item {df}")
+        # return df["truncatedText"].values
     else:
         raise ValueError(f"Unsupported content type:{input_content_type}")
 
@@ -95,6 +97,7 @@ def predict_fn(input_data, model_artifacts):
     """
 
     logging.info("in predict_fn()")
+    logging.info(f"MISHA: len - {len(input_data)}")
 
     input_ids = []
     attention_masks = []
@@ -110,7 +113,9 @@ def predict_fn(input_data, model_artifacts):
         return e_x / div
 
     # limit number of CPU threads to be used per worker
-    # torch.set_num_threads(1)
+    cpu_count = mp.cpu_count()
+    if cpu_count > 1:
+        torch.set_num_threads(cpu_count // 2)
 
     # encode input text
     model.eval()
@@ -138,17 +143,19 @@ def predict_fn(input_data, model_artifacts):
             ),
             batched=True,
         )
-        # return the class with the highest prob with corresponding index
-        # input_ids = torch.tensor(input_ids)
-        # attention_masks = torch.tensor(attention_masks)
-        # logits = model(input_ids, attention_masks)
         trainer = Trainer(model=model, tokenizer=tokenizer)
-        trainer.args.per_device_eval_batch_size = 4
+        trainer.args.per_device_eval_batch_size = 16
         trainer.args.output_dir = None
         trainer.args.overwrite_output_dir = True
 
         logits = trainer.predict(predict_df)
         probs = softmax(logits[0])
+
+        # return the class with the highest prob with corresponding index
+        # input_ids = torch.tensor(input_ids)
+        # attention_masks = torch.tensor(attention_masks)
+        # logits = model(input_ids, attention_masks)
+        # probs = F.softmax(logits[0], dim=1)
         logging.info("Prediction done...")
         return probs
 
@@ -178,7 +185,7 @@ def output_fn(prediction_output, accept):
             )
         )
 
-    logging.info(f"Generated prediction {final_predictions}")
+    logging.info(f"MISHA: Generated prediction len: {len(final_predictions)}")
 
     return pd.DataFrame(final_predictions).to_csv(index=False, header=None)
     # return pd.DataFrame(
