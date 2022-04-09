@@ -53,7 +53,7 @@ def upload_to_gcs(bucket, object_name, local_file):
 
 
 with DAG(
-    dag_id="data_ingestion_fhv_2019_v1",
+    dag_id="data_ingestion_fhv_2019_v2",
     schedule_interval="0 6 2 * *",
     start_date=datetime(2019, 1, 1),
     end_date=datetime(2019, 12, 31),

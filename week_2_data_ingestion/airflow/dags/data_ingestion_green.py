@@ -7,20 +7,21 @@ import pyarrow.parquet as pq
 from airflow import DAG
 from airflow.operators.bash import BashOperator
 from airflow.operators.python import PythonOperator
-from airflow.utils.dates import days_ago
 from google.cloud import storage
 
 AIRFLOW_HOME = os.environ.get("AIRFLOW_HOME", "/opt/airflow/")
 PROJECT_ID = os.environ.get("GCP_PROJECT_ID")
 BUCKET = os.environ.get("GCP_GCS_BUCKET")
-
-URL_PREFIX = "https://nyc-tlc.s3.amazonaws.com/trip+data"
-URL_TEMPLATE = "https://s3.amazonaws.com/nyc-tlc/misc/taxi+_zone_lookup.csv"
-OUTPUT_FILE_TEMPLATE = AIRFLOW_HOME + "/taxi+_zone_lookup.csv"
+URL_PREFIX = "https://s3.amazonaws.com/nyc-tlc/trip+data"
+URL_TEMPLATE = (
+    URL_PREFIX + "/green_tripdata_{{ execution_date.strftime('%Y-%m') }}.csv"
+)
+OUTPUT_FILE_TEMPLATE = (
+    AIRFLOW_HOME + "/green_tripdata_{{ execution_date.strftime('%Y-%m') }}.csv"
+)
 
 OUTPUT_FILE_PARQUET = OUTPUT_FILE_TEMPLATE.replace(".csv", ".parquet")
 SHORT_FILE_PARQUET = os.path.basename(OUTPUT_FILE_PARQUET)
-
 
 def format_to_parquet(src_file):
     if not src_file.endswith(".csv"):
@@ -53,17 +54,18 @@ def upload_to_gcs(bucket, object_name, local_file):
 
 
 with DAG(
-    dag_id="data_ingestion_zones_v2",
-    schedule_interval="@once",
-    start_date=days_ago(1),
+    dag_id="data_ingestion_green_2019_2020_v2",
+    schedule_interval="0 6 2 * *",
+    start_date=datetime(2019, 1, 1),
+    end_date=datetime(2020, 12, 31),
     catchup=True,
-    max_active_runs=1,
+    max_active_runs=3,
     tags=["dtc-de"],
 ) as dag:
 
     wget_task = BashOperator(
         task_id="wget",
-        bash_command=f"curl -sSfL {URL_TEMPLATE} > {OUTPUT_FILE_TEMPLATE}",
+        bash_command=f"curl -sSLf {URL_TEMPLATE} > {OUTPUT_FILE_TEMPLATE}",
     )
 
     print(f"Finished wget for {URL_TEMPLATE}")

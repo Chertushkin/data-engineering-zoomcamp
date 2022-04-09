@@ -54,7 +54,7 @@ def upload_to_gcs(bucket, object_name, local_file):
 
 
 with DAG(
-    dag_id="data_ingestion_yellow_2019_2020_v5",
+    dag_id="data_ingestion_yellow_2019_2020_v6",
     schedule_interval="0 6 2 * *",
     start_date=datetime(2019, 1, 1),
     end_date=datetime(2020, 12, 31),
