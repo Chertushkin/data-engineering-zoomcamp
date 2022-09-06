@@ -1,4 +1,5 @@
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, Trainer
+from torchvision import models
+import torch
 import tarfile
 import os
 import boto3
@@ -6,8 +7,6 @@ import shutil as sh
 
 
 from constants import S3_BUCKET_PATH, SAVE_PATH, SAVE_PATH_TAR
-
-checkpoint = "cardiffnlp/twitter-roberta-base-sentiment"
 
 
 class ModelSaver:
@@ -40,10 +39,8 @@ class ModelSaver:
 
 
 with ModelSaver() as mv:
-    tokenizer = AutoTokenizer.from_pretrained(checkpoint)
-    model = AutoModelForSequenceClassification.from_pretrained(checkpoint)
-    trainer = Trainer(model=model, tokenizer=tokenizer)
-    trainer.save_model(SAVE_PATH)
+    model = models.resnet18(pretrained=True)
+    torch.save(model.state_dict, SAVE_PATH)
 
     mv.make_tarfile(SAVE_PATH_TAR, SAVE_PATH)
     mv.upload_s3_file(SAVE_PATH_TAR, SAVE_PATH_TAR)
