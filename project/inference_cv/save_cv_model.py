@@ -3,7 +3,6 @@ import torch
 import tarfile
 import os
 import boto3
-import shutil as sh
 
 
 from constants import S3_BUCKET_PATH, SAVE_PATH, SAVE_PATH_TAR
@@ -22,14 +21,14 @@ class ModelSaver:
     def cleanup(self):
         if os.path.exists(SAVE_PATH):
             print(f"Cleaning {SAVE_PATH}")
-            sh.rmtree(SAVE_PATH)
+            os.remove(SAVE_PATH)
         if os.path.exists(SAVE_PATH_TAR):
             print(f"Cleaning {SAVE_PATH_TAR}")
             os.remove(SAVE_PATH_TAR)
 
     def make_tarfile(self, output_filename, source_dir):
         with tarfile.open(output_filename, "w:gz") as tar:
-            tar.add(source_dir, arcname=".")
+            tar.add(source_dir)
             # tar.add(source_dir, arcname=os.path.basename(source_dir))
 
     def upload_s3_file(self, filename, local_filename):
