@@ -39,7 +39,7 @@ class ModelSaver:
 
 with ModelSaver() as mv:
     model = models.resnet18(pretrained=True)
-    torch.save(model.state_dict, SAVE_PATH)
+    torch.save(model.state_dict(), SAVE_PATH)
 
     mv.make_tarfile(SAVE_PATH_TAR, SAVE_PATH)
     mv.upload_s3_file(SAVE_PATH_TAR, SAVE_PATH_TAR)

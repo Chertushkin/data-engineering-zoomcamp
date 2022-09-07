@@ -28,9 +28,9 @@ def model_fn(model_dir):
 
     logging.info(f"Loading model from {model_dir}")
     model = models.resnet18(pretrained=False)
-
-    with open(os.path.join(model_dir, "image_classifier.pth"), "rb") as f:
-        model.load_state_dict(torch.load(f))
+    path = os.path.join(model_dir, "image_classifier.pth")
+    # with open(os.path.join(model_dir, "image_classifier.pth"), "rb") as f:
+    model.load_state_dict(torch.load(path))
 
     model = model.to(device)
     return model
@@ -97,16 +97,4 @@ def output_fn(prediction_output, accept):
 
     logging.info("in output_fn()")
 
-    final_predictions = []
-
-    # associate class with predictions
-    for prediction in prediction_output:
-        final_predictions.append(
-            (
-                prediction
-            )
-        )
-
-    logging.info(f"MISHA: Generated prediction len: {len(final_predictions)}")
-
-    return pd.DataFrame(final_predictions).to_csv(index=False, header=None)
+    return prediction_output
